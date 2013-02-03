@@ -190,8 +190,8 @@ class Redmine:
 		self.debug = debug
 		self.readonlytest = readonlytest
 		self._projects = []
-		self.projectsID = {}
-		self.projectsXML = {}
+		self._projectsID = {}
+		self._projectsXML = None
 		
 		self.issuesID = {}
 		self.issuesXML = {}
@@ -238,11 +238,18 @@ class Redmine:
 	@property
 	def projects(self):
 		if not self._projects:
-			self.projectsXML = self.get("projects.xml")
-			for projectXML in self.projectsXML.findall("project"):
+			self._projectsXML = self.get("projects.xml")
+			for projectXML in self._projectsXML.findall("project"):
 				self._projects.append(self.Project(projectXML))
 		return self._projects
 
+	@property
+	def projectsXML(self):
+		if not self._projectsXML:
+			self._projectsXML = self.get("projects.xml")
+			for projectXml in self._projectsXML.findall("project"):
+				self._projects.append(self.Project(projectXml))
+		return self._projectsXML
 
 	def Issue(self, eTree=None ):
 		'''Issue object factory'''

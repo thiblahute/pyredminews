@@ -24,7 +24,7 @@ class _Project:
 	   redmine is the redmine object.
 	   objXML is the xml object containing the object data'''
 	
-	def __init__(self, redmine, eTree=None ):
+	def __init__(self, redmine, root=None ):
 		self.__redmine = redmine
 		self.root = None
 		self.number = None
@@ -33,9 +33,9 @@ class _Project:
 		self.custom = {}
 		self.tracker = {}
 		
-		if eTree:
+		if root:
 			try:
-				self.parseETree( eTree )
+				self.parseETree( root )
 			except:
 				if self.__redmine.readonlytest:
 					self.THIS_IS_FAKE_DATA = True
@@ -46,9 +46,8 @@ class _Project:
 				else:
 					raise
 		
-	def parseETree(self, eTree ):
-		self.root = eTree.getroot()
-		
+	def parseETree(self, root ):
+		self.root = root
 		if self.root.tag == 'projects':
 			raise TypeError ('XML does not describe a single project, but a collection of projects.')
 		elif not self.root.tag == 'project':
@@ -190,7 +189,7 @@ class Redmine:
 		self.__key = key
 		self.debug = debug
 		self.readonlytest = readonlytest
-		self.projects = {}
+		self._projects = []
 		self.projectsID = {}
 		self.projectsXML = {}
 		
@@ -236,14 +235,22 @@ class Redmine:
 				pass
 				#raise TypeError('Must pass a key or username and password')
 		
+	@property
+	def projects(self):
+		if not self._projects:
+			self.projectsXML = self.get("projects.xml")
+			for projectXML in self.projectsXML.findall("project"):
+				self._projects.append(self.Project(projectXML))
+		return self._projects
+
 
 	def Issue(self, eTree=None ):
 		'''Issue object factory'''
 		return _Issue( self, eTree )
 		
-	def Project(self, eTree=None ):
+	def Project(self, root=None ):
 		'''Issue project factory'''
-		return _Project( self, eTree )
+		return _Project( self, root )
 	
 	# extend the request to handle PUT command
 	class PUT_Request(urllib2.Request):
@@ -344,7 +351,12 @@ class Redmine:
 		
 	def getProject(self, projectIdent ):
 		'''returns a project object for the given project name'''
-		return self.Project( self.get('projects/'+projectIdent+'.xml') )
+		etree = self.get('projects/'+projectIdent+'.xml')
+		if etree:
+			root = etree.getroot()
+		else:
+			root = None
+		return self.Project( None )
 		
 	def getIssue(self, issueID ):
 		'''returns an issue object for the given issue number'''

@@ -35,7 +35,10 @@ class _User:
 
 	def _parse(self, node):
 		self.id = node.find('id').text
-		self.logging = node.find('logging').text
+		try:
+			self.logging = node.find('logging').text
+		except AttributeError:
+			pass
 		self.firstname = node.find('firstname').text
 		self.lastname = node.find('lastname').text
 		self.mail = node.find('mail').text

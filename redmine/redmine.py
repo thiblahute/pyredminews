@@ -380,9 +380,15 @@ class Redmine:
 		return ET.tostring( root, encoding='UTF-8' )
 		
 		
-	def getProject(self, projectIdent ):
+	def getProject(self, projectID ):
 		'''returns a project object for the given project name'''
-		etree = self.get('projects/'+projectIdent+'.xml')
+		if self._projectsID:
+			try:
+				return self._projectsID[projectID]
+			except KeyError:
+				pass
+
+		etree = self.get('projects/'+projectID+'.xml')
 		if etree:
 			root = etree.getroot()
 		else:

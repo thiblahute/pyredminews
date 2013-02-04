@@ -56,7 +56,7 @@ class _Project:
 		self.tracker = {}
 		self._issues = []
 		
-		if root:
+		if root is not None:
 			try:
 				self.parseETree( root )
 			except:
@@ -122,7 +122,7 @@ class _Project:
 
 class _Issue:
 	'''Object returned by Redmine getIssue and newIssue calls'''
-	def __init__(self, redmine, eTree=None ):
+	def __init__(self, redmine, root=None ):
 		self.__redmine = redmine
 		
 		self.id = None
@@ -133,9 +133,9 @@ class _Issue:
 		self.tracker = None
 		self.status = None
 		
-		if eTree:
+		if root is not None:
 			try:
-				self.parseETree( eTree )
+				self.parseETree( root )
 			except:
 				if self.__redmine.readonlytest:
 					self.THIS_IS_FAKE_DATA = True

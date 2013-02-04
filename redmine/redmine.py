@@ -17,7 +17,29 @@ import urllib
 import urllib2
 from xml.dom import minidom, getDOMImplementation
 import xml.etree.ElementTree as ET
-		
+
+
+class _User:
+	''' Object returned by Remine getUser calls '''
+
+	def __init__(self, redmine, node):
+		self.__redmine = redmine
+		self.id = None
+		self.logging = None
+		self.firstname = None
+		self.lastname = None
+		self.mail = None
+		self.root = node
+		if node:
+			self._parse(node)
+
+	def _parse(self, node):
+		self.id = node.find('id').text
+		self.logging = node.find('logging').text
+		self.firstname = node.find('firstname').text
+		self.lastname = node.find('lastname').text
+		self.mail = node.find('mail').text
+
 
 class _Project:
 	'''Object returned by Redmine getProject calls
@@ -32,6 +54,7 @@ class _Project:
 		self.name = None
 		self.custom = {}
 		self.tracker = {}
+		self._issues = []
 		
 		if root:
 			try:
@@ -192,6 +215,7 @@ class Redmine:
 		self._projects = []
 		self._projectsID = {}
 		self._projectsXML = None
+		self._user = None
 		
 		self.issuesID = {}
 		self.issuesXML = {}
@@ -392,5 +416,12 @@ class Redmine:
 	def resolveIssue(self, ID ):
 		'''close an issue by setting the status to self.ISSUE_STATUS_ID_RESOLVED'''
 		self.updateIssueFromDict( ID, {'status_id':self.ISSUE_STATUS_ID_RESOLVED} )
-		
-	
+
+
+	@property
+	def user(self):
+		if self._user:
+			return self._user
+
+		self._user = _User(self, self.get("users/current.xml"))
+		return self._user

@@ -150,9 +150,9 @@ class _Issue:
 					raise
 
 	
-	def parseETree(self, eTree):
-		'''Parse fields from given eTree into this object'''
-		self.root = eTree.getroot()
+	def parseETree(self, root):
+		'''Parse fields from given root into this object'''
+		self.root = root
 		
 		if self.root.tag == 'issues':
 			raise TypeError ('XML does not describe a single issue, but a collection of issues.')
@@ -260,26 +260,34 @@ class Redmine:
 			if not key:
 				pass
 				#raise TypeError('Must pass a key or username and password')
+	
+	def _feedProjects(self):
+		if self._projects:
+			return
+		self._projectsXML = self.get("projects.xml")
+		for projectXML in self._projectsXML.findall("project"):
+			proj = self.Project(projectXML)
+			self._projects.append(proj)
+			self._projectsID[proj.number] = proj
 		
 	@property
 	def projects(self):
-		if not self._projects:
-			self._projectsXML = self.get("projects.xml")
-			for projectXML in self._projectsXML.findall("project"):
-				self._projects.append(self.Project(projectXML))
+		self._feedProjects()
 		return self._projects
 
 	@property
 	def projectsXML(self):
-		if not self._projectsXML:
-			self._projectsXML = self.get("projects.xml")
-			for projectXml in self._projectsXML.findall("project"):
-				self._projects.append(self.Project(projectXml))
+		self._feedProjects()
 		return self._projectsXML
 
-	def Issue(self, eTree=None ):
+	@property
+	def projectsID(self):
+		self._feedProjects()
+		return self._projectsID
+
+	def Issue(self, root=None ):
 		'''Issue object factory'''
-		return _Issue( self, eTree )
+		return _Issue( self, root )
 		
 	def Project(self, root=None ):
 		'''Issue project factory'''
@@ -399,12 +407,22 @@ class Redmine:
 		
 	def getIssue(self, issueID ):
 		'''returns an issue object for the given issue number'''
-		return self.Issue( self.get('issues/'+str(issueID)+'.xml') )
+		eTree = self.get('issues/'+str(issueID)+'.xml')
+		if eTree:
+			root = eTree.getroot()
+		else:
+			root = None
+		return self.Issue( root )
 		
 	def newIssueFromDict(self, dict ):
 		'''creates a new issue using fields from the passed dictionary.  Returns the issue number or None if it failed. '''
 		xmlStr = self.dict2XML( 'issue', dict )
-		newIssue = self.Issue( self.post( 'issues.xml', xmlStr ) )
+		eTree = self.post( 'issues.xml', xmlStr )
+		if eTree:
+			root = eTree.getroot()
+		else:
+			root = None
+		newIssue = self.Issue( root )
 		return newIssue
 	
 	def updateIssueFromDict(self, ID, dict ):

@@ -114,9 +114,11 @@ class _Project:
 		data[ 'project_id' ] = self.number
 		return self.__redmine.newIssueFromDict( data )
 		
-	def getIssues(self ):
-		pass
-		#todo: finish
+	@property
+	def issues(self ):
+		for issueXML in self.__redmine.get("issues.xml", {'project_id':self.number}).findall("issue"):
+			self._issues.append(_Issue(self.__redmine, issueXML))
+		return self._issues
 
 
 
